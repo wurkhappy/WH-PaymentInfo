@@ -41,8 +41,12 @@ func SaveCard(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
 
 	user.Cards = append(user.Cards, card)
 
-	user.SaveWithCtx(ctx)
+	err = user.SaveWithCtx(ctx)
+		if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
-	u, _ := json.Marshal(user)
+	u, _ := json.Marshal(card)
 	w.Write(u)
 }
