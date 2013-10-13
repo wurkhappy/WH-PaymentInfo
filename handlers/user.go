@@ -30,7 +30,8 @@ func CreateUser(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
 
 	if bError != nil {
 		errorCode, _ := strconv.Atoi(bError.StatusCode)
-		http.Error(w, "Error", errorCode)
+		http.Error(w, bError.Description, errorCode)
+		return
 	}
 
 	user := new(models.User)
@@ -41,7 +42,7 @@ func CreateUser(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
 	err := user.SaveWithCtx(ctx)
 
 	if err != nil {
-		http.Error(w, "User was not saved", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

@@ -4,14 +4,14 @@ import (
 	// "github.com/wurkhappy/Balanced-go"
 	"github.com/wurkhappy/WH-PaymentInfo/DB"
 	"labix.org/v2/mgo/bson"
-	// "log"
+	"log"
 )
 
 type User struct {
-	ID    string  `json:"id" bson:"_id"`
-	URI   string  `json:"id" bson:"_id"`
-	Cards []*Card `json:"cards"`
-	// Accounts []*BankAccount `json:"accounts"`
+	ID       string     `json:"id" bson:"_id"`
+	URI      string     `json:"id"`
+	Cards    []*Card    `json:"cards"`
+	Accounts []*Account `json:"accounts"`
 }
 
 func FindUserByID(id string, ctx *DB.Context) (u *User, err error) {
@@ -25,6 +25,7 @@ func FindUserByID(id string, ctx *DB.Context) (u *User, err error) {
 func (u *User) SaveWithCtx(ctx *DB.Context) (err error) {
 	coll := ctx.Database.C("usersbal")
 	if _, err := coll.UpsertId(u.ID, &u); err != nil {
+		log.Print(err)
 		return err
 	}
 	return nil

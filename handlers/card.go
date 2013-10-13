@@ -11,30 +11,35 @@ import (
 	"strconv"
 )
 
-func SaveCardUri(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
+func SaveCard(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
 
 	vars := mux.Vars(req)
 	id := vars["id"]
 
-	card := new(balanced.Card)
+	balCard := new(balanced.Card)
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(req.Body)
-	json.Unmarshal(buf.Bytes(), &card)
+	json.Unmarshal(buf.Bytes(), &balCard)
 
 	user, err := models.FindUserByID(id, ctx)
 	if err != nil {
-		http.Error(w, "Error", http.StatusBadRequest)
+		http.Error(w, "Error: couldn't find user", http.StatusBadRequest)
+		return
 	}
 
 	userBal := new(balanced.Customer)
 	userBal.URI = user.URI
-	bError := userBal.AddCreditCard(card)
+	bError := userBal.AddCreditCard(balCard)
 	if bError != nil {
 		errorCode, _ := strconv.Atoi(bError.StatusCode)
-		http.Error(w, "Error", errorCode)
+		http.Error(w, bError.Description, errorCode)
+		return
 	}
 
-	user.Cards = append(user.Cards)
+	card := new(models.Card)
+	card.ConvertBalancedCard(balCard)
+
+	user.Cards = append(user.Cards, card)
 
 	user.SaveWithCtx(ctx)
 

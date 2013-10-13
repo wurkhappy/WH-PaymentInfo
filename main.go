@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/wurkhappy/Balanced-go"
 	"github.com/wurkhappy/WH-PaymentInfo/DB"
 	"github.com/wurkhappy/WH-PaymentInfo/handlers"
 	"labix.org/v2/mgo"
@@ -19,12 +20,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	balanced.Username = "ak-test-3TJ2ufbpEUv1BDgxpoCstfj5h2XWMAqG"
 	r := mux.NewRouter()
 	r.Handle("/user/{id}", dbContextMixIn(handlers.GetUser)).Methods("GET")
-	r.Handle("/user/{id}", dbContextMixIn(handlers.GetUser)).Methods("POST")
+	r.Handle("/user/{id}", dbContextMixIn(handlers.CreateUser)).Methods("POST")
+	r.Handle("/user/{id}/cards", dbContextMixIn(handlers.SaveCard)).Methods("POST")
 	http.Handle("/", r)
 
-	http.ListenAndServe(":3000", nil)
+	http.ListenAndServe(":3120", nil)
 }
 
 type dbContextMixIn func(http.ResponseWriter, *http.Request, *DB.Context)
