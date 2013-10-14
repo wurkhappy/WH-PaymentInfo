@@ -20,11 +20,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	balanced.Username = "ak-test-3TJ2ufbpEUv1BDgxpoCstfj5h2XWMAqG"
+	balanced.Username = "ak-test-x9PqPQUtpvUtnXsZqBL4rXGAE8WvvqoJ"
 	r := mux.NewRouter()
 	r.Handle("/user/{id}", dbContextMixIn(handlers.GetUser)).Methods("GET")
 	r.Handle("/user/{id}", dbContextMixIn(handlers.CreateUser)).Methods("POST")
 	r.Handle("/user/{id}/cards", dbContextMixIn(handlers.SaveCard)).Methods("POST")
+	r.Handle("/user/{id}/cards", dbContextMixIn(handlers.GetCards)).Methods("GET")
+	r.Handle("/user/{id}/cards/{cardID}", dbContextMixIn(handlers.DeleteCard)).Methods("DELETE")
 	http.Handle("/", r)
 
 	http.ListenAndServe(":3120", nil)
