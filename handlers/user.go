@@ -38,6 +38,7 @@ func CreateUser(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
 
 	user.ID = id
 	user.URI = userBal.URI
+	user.DebitsURI = userBal.DebitsURI
 
 	err := user.SaveWithCtx(ctx)
 
