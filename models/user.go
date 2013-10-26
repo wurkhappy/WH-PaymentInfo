@@ -8,11 +8,11 @@ import (
 )
 
 type User struct {
-	ID        string     `json:"id" bson:"_id"`
-	URI       string     `json:"uri"`
-	DebitsURI string     `json:"debitsURI"`
-	Cards     []*Card    `json:"cards"`
-	Accounts  []*Account `json:"accounts"`
+	ID        string         `json:"id" bson:"_id"`
+	URI       string         `json:"uri"`
+	DebitsURI string         `json:"debitsURI"`
+	Cards     []*Card        `json:"cards"`
+	Accounts  []*BankAccount `json:"accounts"`
 }
 
 func FindUserByID(id string, ctx *DB.Context) (u *User, err error) {

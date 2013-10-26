@@ -34,7 +34,7 @@ func SaveAccountUri(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
 		http.Error(w, "Error", errorCode)
 	}
 
-	account := new(models.Account)
+	account := new(models.BankAccount)
 	account.ConvertBalancedAccount(balAccount)
 
 	user.Accounts = append(user.Accounts, account)

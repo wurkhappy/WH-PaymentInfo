@@ -27,6 +27,9 @@ func main() {
 	r.Handle("/user/{id}/cards", dbContextMixIn(handlers.SaveCard)).Methods("POST")
 	r.Handle("/user/{id}/cards", dbContextMixIn(handlers.GetCards)).Methods("GET")
 	r.Handle("/user/{id}/cards/{cardID}", dbContextMixIn(handlers.DeleteCard)).Methods("DELETE")
+	r.Handle("/user/{id}/bank_account", dbContextMixIn(handlers.SaveBankAccount)).Methods("POST")
+	r.Handle("/user/{id}/bank_account", dbContextMixIn(handlers.GetBankAccounts)).Methods("GET")
+	r.Handle("/user/{id}/bank_account/{accountID}", dbContextMixIn(handlers.DeleteBankAccount)).Methods("DELETE")
 	http.Handle("/", r)
 
 	http.ListenAndServe(":3120", nil)
