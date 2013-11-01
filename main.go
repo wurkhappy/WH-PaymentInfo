@@ -30,6 +30,7 @@ func main() {
 	r.Handle("/user/{id}/bank_account", dbContextMixIn(handlers.SaveBankAccount)).Methods("POST")
 	r.Handle("/user/{id}/bank_account", dbContextMixIn(handlers.GetBankAccounts)).Methods("GET")
 	r.Handle("/user/{id}/bank_account/{accountID}", dbContextMixIn(handlers.DeleteBankAccount)).Methods("DELETE")
+	r.Handle("/user/{id}/bank_account/{accountID}/verify", dbContextMixIn(handlers.VerifyBankAccount)).Methods("POST")
 	http.Handle("/", r)
 
 	http.ListenAndServe(":3120", nil)

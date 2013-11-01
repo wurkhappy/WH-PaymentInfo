@@ -11,6 +11,7 @@ import (
 
 type BankAccount struct {
 	ID               string `json:"id"`
+	CanDebit         bool   `json:"can_debit"`
 	AccountNumber    string `json:"account_number,omitempty"`
 	URI              string `json:"uri,omitempty"`
 	RoutingNumber    string `json:"routing_number,omitempty"`
@@ -33,6 +34,7 @@ func (a *BankAccount) ConvertBalancedAccount(balAccount *balanced.BankAccount) {
 	a.VerificationURI = balAccount.VerificationURI
 	a.VerificationsURI = balAccount.VerificationsURI
 	a.CreditsURI = balAccount.CreditsURI
+	a.CanDebit = balAccount.CanDebit
 }
 
 func DeleteBankAccount(userID string, accountID string, ctx *DB.Context) {
@@ -63,4 +65,3 @@ func DeleteBankAccount(userID string, accountID string, ctx *DB.Context) {
 		}
 	}
 }
-
