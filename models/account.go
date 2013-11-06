@@ -3,6 +3,7 @@ package models
 import (
 	"github.com/nu7hatch/gouuid"
 	"github.com/wurkhappy/Balanced-go"
+	"fmt"
 	// "log"
 )
 
@@ -22,6 +23,22 @@ func NewBankAccount() *BankAccount {
 	return &BankAccount{
 		ID: id.String(),
 	}
+}
+
+func (b *BankAccount) ConfirmVerification(amount1 float64, amount2 float64) error {
+	balAccount := new(balanced.BankAccount)
+	balAccount.VerificationURI = b.VerificationURI
+	verification, bError := balAccount.ConfirmVerification(amount1, amount2)
+	if bError != nil {
+		return fmt.Errorf("%s", bError.Description)
+	}
+
+	if verification.State == "verified" {
+		b.CanDebit = true
+	} else {
+		return fmt.Errorf("%s", "Account not verified")
+	}
+	return nil
 }
 
 func (a *BankAccount) ConvertFromBalancedAccount(balAccount *balanced.BankAccount) {

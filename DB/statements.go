@@ -7,7 +7,6 @@ import (
 )
 
 var UpsertUser *sql.Stmt
-var FindUserByEmail *sql.Stmt
 var FindUserByID *sql.Stmt
 var DeleteUser *sql.Stmt
 var FindUsers *sql.Stmt
@@ -22,21 +21,6 @@ func CreateStatements() {
 	}
 
 	FindUserByID, err = DB.Prepare("SELECT data FROM balanced_user WHERE id = $1")
-	if err != nil {
-		panic(err)
-	}
-
-	FindUserByEmail, err = DB.Prepare("SELECT password, data FROM wh_user WHERE data->>'email' = $1")
-	if err != nil {
-		panic(err)
-	}
-
-	DeleteUser, err = DB.Prepare("DELETE FROM wh_user WHERE id = $1")
-	if err != nil {
-		panic(err)
-	}
-
-	FindUsers, err = DB.Prepare("SELECT data FROM wh_user WHERE id = ANY($1)")
 	if err != nil {
 		panic(err)
 	}

@@ -16,6 +16,16 @@ type User struct {
 	Accounts  []*BankAccount `json:"accounts"`
 }
 
+func (u *User) GetBankAccount(accountID string) *BankAccount {
+	var bankAccount *BankAccount
+	for _, account := range u.Accounts {
+		if account.ID == accountID {
+			bankAccount = account
+		}
+	}
+	return bankAccount
+}
+
 func CreateUserWithID(id string) (u *User, err error) {
 	u = new(User)
 	u.ID = id
@@ -99,6 +109,7 @@ func (u *User) AddBankAccount(ba *BankAccount) error {
 	if bError != nil {
 		return fmt.Errorf("%s", bError.Description)
 	}
+	ba.VerificationURI = balAccount.VerificationURI
 	u.Accounts = append(u.Accounts, ba)
 	return nil
 }

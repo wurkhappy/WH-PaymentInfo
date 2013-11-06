@@ -5,14 +5,11 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	"github.com/nu7hatch/gouuid"
-	"github.com/wurkhappy/Balanced-go"
-	"github.com/wurkhappy/WH-PaymentInfo/DB"
 	"github.com/wurkhappy/WH-PaymentInfo/models"
 	"net/http"
-	"strconv"
 )
 
-func SaveCard(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
+func SaveCard(w http.ResponseWriter, req *http.Request) {
 
 	vars := mux.Vars(req)
 	id := vars["id"]
@@ -23,7 +20,7 @@ func SaveCard(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
 	json.Unmarshal(buf.Bytes(), &card)
 
 	cardID, _ := uuid.NewV4()
-	card.ID = cardID
+	card.ID = cardID.String()
 
 	user, err := models.FindUserByID(id)
 	if err != nil {
@@ -47,7 +44,7 @@ func SaveCard(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
 	w.Write(u)
 }
 
-func GetCards(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
+func GetCards(w http.ResponseWriter, req *http.Request) {
 
 	vars := mux.Vars(req)
 	id := vars["id"]
@@ -62,7 +59,7 @@ func GetCards(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
 	w.Write(jsonBytes)
 }
 
-func DeleteCard(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
+func DeleteCard(w http.ResponseWriter, req *http.Request) {
 
 	vars := mux.Vars(req)
 	id := vars["id"]

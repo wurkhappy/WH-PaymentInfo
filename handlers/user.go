@@ -3,25 +3,22 @@ package handlers
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
-	"github.com/wurkhappy/Balanced-go"
-	"github.com/wurkhappy/WH-PaymentInfo/DB"
 	"github.com/wurkhappy/WH-PaymentInfo/models"
 	"net/http"
-	"strconv"
 	// "bytes"
 )
 
-func GetUser(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
+func GetUser(w http.ResponseWriter, req *http.Request) {
 
 	vars := mux.Vars(req)
 	id := vars["id"]
-	user, _ := models.FindUserByID(id, ctx)
+	user, _ := models.FindUserByID(id)
 
 	u, _ := json.Marshal(user)
 	w.Write(u)
 }
 
-func CreateUser(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
+func CreateUser(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
 	id := vars["id"]
 
