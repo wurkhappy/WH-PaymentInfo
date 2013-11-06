@@ -3,9 +3,6 @@ package models
 import (
 	"github.com/nu7hatch/gouuid"
 	"github.com/wurkhappy/Balanced-go"
-	"github.com/wurkhappy/WH-PaymentInfo/DB"
-	"labix.org/v2/mgo"
-	"labix.org/v2/mgo/bson"
 	// "log"
 )
 
@@ -27,7 +24,7 @@ func NewBankAccount() *BankAccount {
 	}
 }
 
-func (a *BankAccount) ConvertBalancedAccount(balAccount *balanced.BankAccount) {
+func (a *BankAccount) ConvertFromBalancedAccount(balAccount *balanced.BankAccount) {
 	a.AccountNumber = balAccount.AccountNumber
 	a.URI = balAccount.URI
 	a.RoutingNumber = balAccount.RoutingNumber
@@ -37,31 +34,14 @@ func (a *BankAccount) ConvertBalancedAccount(balAccount *balanced.BankAccount) {
 	a.CanDebit = balAccount.CanDebit
 }
 
-func DeleteBankAccount(userID string, accountID string, ctx *DB.Context) {
-	m := make(map[string]interface{})
-
-	change := mgo.Change{
-		Update:    bson.M{"$pull": bson.M{"accounts": bson.M{"id": accountID}}},
-		ReturnNew: true,
-	}
-	coll := ctx.Database.C("usersbal")
-	query := coll.Find(bson.M{
-		"_id": userID,
-	})
-
-	user := new(User)
-	query.One(&user)
-	balBankAccount := new(balanced.BankAccount)
-
-	for _, bankAccount := range user.Accounts {
-		if bankAccount.ID == accountID {
-			balBankAccount.URI = bankAccount.URI
-			bError := balBankAccount.Delete()
-			if bError != nil {
-				return
-			}
-
-			_, _ = query.Apply(change, &m)
-		}
-	}
+func (a *BankAccount) ConvertToBalancedAccount() (balAccount *balanced.BankAccount) {
+	balAccount = new(balanced.BankAccount)
+	balAccount.AccountNumber = a.AccountNumber
+	balAccount.URI = a.URI
+	balAccount.RoutingNumber = a.RoutingNumber
+	balAccount.VerificationURI = a.VerificationURI
+	balAccount.VerificationsURI = a.VerificationsURI
+	balAccount.CreditsURI = a.CreditsURI
+	balAccount.CanDebit = a.CanDebit
+	return balAccount
 }

@@ -25,23 +25,13 @@ func CreateUser(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
 	vars := mux.Vars(req)
 	id := vars["id"]
 
-	userBal := new(balanced.Customer)
-	bError := userBal.Create()
-
-	if bError != nil {
-		errorCode, _ := strconv.Atoi(bError.StatusCode)
-		http.Error(w, bError.Description, errorCode)
+	user, err := models.CreateUserWithID(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	user := new(models.User)
-
-	user.ID = id
-	user.URI = userBal.URI
-	user.DebitsURI = userBal.DebitsURI
-
-	err := user.SaveWithCtx(ctx)
-
+	err = user.Save()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"github.com/nu7hatch/gouuid"
 	"github.com/wurkhappy/Balanced-go"
 	"github.com/wurkhappy/WH-PaymentInfo/DB"
 	"github.com/wurkhappy/WH-PaymentInfo/models"
@@ -16,32 +17,27 @@ func SaveCard(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
 	vars := mux.Vars(req)
 	id := vars["id"]
 
-	balCard := new(balanced.Card)
+	card := new(models.Card)
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(req.Body)
-	json.Unmarshal(buf.Bytes(), &balCard)
+	json.Unmarshal(buf.Bytes(), &card)
 
-	user, err := models.FindUserByID(id, ctx)
+	cardID, _ := uuid.NewV4()
+	card.ID = cardID
+
+	user, err := models.FindUserByID(id)
 	if err != nil {
 		http.Error(w, "Error: couldn't find user", http.StatusBadRequest)
 		return
 	}
 
-	userBal := new(balanced.Customer)
-	userBal.URI = user.URI
-	bError := userBal.AddCreditCard(balCard)
-	if bError != nil {
-		errorCode, _ := strconv.Atoi(bError.StatusCode)
-		http.Error(w, bError.Description, errorCode)
+	err = user.AddCreditCard(card)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	card := models.NewCard()
-	card.ConvertBalancedCard(balCard)
-
-	user.Cards = append(user.Cards, card)
-
-	err = user.SaveWithCtx(ctx)
+	err = user.Save()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -56,7 +52,7 @@ func GetCards(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
 	vars := mux.Vars(req)
 	id := vars["id"]
 
-	user, err := models.FindUserByID(id, ctx)
+	user, err := models.FindUserByID(id)
 	if err != nil {
 		http.Error(w, "Error: couldn't find user", http.StatusBadRequest)
 		return
@@ -72,5 +68,15 @@ func DeleteCard(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
 	id := vars["id"]
 	cardID := vars["cardID"]
 
-	models.DeleteCard(id, cardID, ctx)
+	user, err := models.FindUserByID(id)
+	if err != nil {
+		http.Error(w, "Error: couldn't find user", http.StatusBadRequest)
+		return
+	}
+
+	err = user.DeleteCard(cardID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 }

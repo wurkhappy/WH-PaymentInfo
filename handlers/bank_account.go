@@ -17,38 +17,27 @@ func SaveBankAccount(w http.ResponseWriter, req *http.Request, ctx *DB.Context) 
 	vars := mux.Vars(req)
 	id := vars["id"]
 
-	balAccount := new(balanced.BankAccount)
+	bankAccount := new(models.BankAccount)
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(req.Body)
-	json.Unmarshal(buf.Bytes(), &balAccount)
+	json.Unmarshal(buf.Bytes(), &bankAccount)
 
-	user, err := models.FindUserByID(id, ctx)
+	accountID, _ := uuid.NewV4()
+	bankAccount.ID = accountID
+
+	user, err := models.FindUserByID(id)
 	if err != nil {
 		http.Error(w, "Error: couldn't find user", http.StatusBadRequest)
 		return
 	}
 
-	userBal := new(balanced.Customer)
-	userBal.URI = user.URI
-	bError := userBal.AddBankAccount(balAccount)
-	if bError != nil {
-		errorCode, _ := strconv.Atoi(bError.StatusCode)
-		http.Error(w, bError.Description, errorCode)
-		return
-	}
-	_, bError = balAccount.Verify()
-	if bError != nil {
-		errorCode, _ := strconv.Atoi(bError.StatusCode)
-		http.Error(w, bError.Description, errorCode)
+	err = user.AddBankAccount(bankAccount)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	bankAccount := models.NewBankAccount()
-	bankAccount.ConvertBalancedAccount(balAccount)
-
-	user.Accounts = append(user.Accounts, bankAccount)
-
-	err = user.SaveWithCtx(ctx)
+	err = user.Save()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -79,7 +68,17 @@ func DeleteBankAccount(w http.ResponseWriter, req *http.Request, ctx *DB.Context
 	id := vars["id"]
 	accountID := vars["accountID"]
 
-	models.DeleteBankAccount(id, accountID, ctx)
+	user, err := models.FindUserByID(id)
+	if err != nil {
+		http.Error(w, "Error: couldn't find user", http.StatusBadRequest)
+		return
+	}
+
+	err = user.DeleteBankAccount(accountID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 }
 
 func VerifyBankAccount(w http.ResponseWriter, req *http.Request, ctx *DB.Context) {
