@@ -1,115 +1,95 @@
 package handlers
 
 import (
-	"bytes"
 	"encoding/json"
-	"github.com/gorilla/mux"
+	"fmt"
 	"github.com/nu7hatch/gouuid"
 	"github.com/wurkhappy/WH-PaymentInfo/models"
 	"net/http"
 	// "log"
 )
 
-func SaveBankAccount(w http.ResponseWriter, req *http.Request) {
-
-	vars := mux.Vars(req)
-	id := vars["id"]
+func SaveBankAccount(params map[string]interface{}, body []byte) ([]byte, error, int) {
+	id := params["id"].(string)
 
 	bankAccount := new(models.BankAccount)
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(req.Body)
-	json.Unmarshal(buf.Bytes(), &bankAccount)
+	json.Unmarshal(body, &bankAccount)
 
 	accountID, _ := uuid.NewV4()
 	bankAccount.ID = accountID.String()
 
 	user, err := models.FindUserByID(id)
 	if err != nil {
-		http.Error(w, "Error: couldn't find user", http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%s", "Error: could not find user"), http.StatusBadRequest
 	}
 
 	err = user.AddBankAccount(bankAccount)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%s %s", "Could not add bank account: ", err.Error()), http.StatusBadRequest
 	}
 
 	err = user.Save()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%s %s", "Could not save user: ", err.Error()), http.StatusBadRequest
 	}
 
-	u, _ := json.Marshal(bankAccount)
-	w.Write(u)
+	ba, _ := json.Marshal(bankAccount)
+	return ba, nil, http.StatusOK
 }
 
-func GetBankAccounts(w http.ResponseWriter, req *http.Request) {
-
-	vars := mux.Vars(req)
-	id := vars["id"]
+func GetBankAccounts(params map[string]interface{}, body []byte) ([]byte, error, int) {
+	id := params["id"].(string)
 
 	user, err := models.FindUserByID(id)
 	if err != nil {
-		http.Error(w, "Error: couldn't find user", http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%s", "Error: could not find user"), http.StatusBadRequest
 	}
 
 	jsonBytes, _ := json.Marshal(user.Accounts)
-	w.Write(jsonBytes)
+	return jsonBytes, nil, http.StatusOK
 }
 
-func DeleteBankAccount(w http.ResponseWriter, req *http.Request) {
-
-	vars := mux.Vars(req)
-	id := vars["id"]
-	accountID := vars["accountID"]
+func DeleteBankAccount(params map[string]interface{}, body []byte) ([]byte, error, int) {
+	id := params["id"].(string)
+	accountID := params["accountID"].(string)
 
 	user, err := models.FindUserByID(id)
 	if err != nil {
-		http.Error(w, "Error: couldn't find user", http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%s", "Error: could not find user"), http.StatusBadRequest
 	}
 
 	err = user.DeleteBankAccount(accountID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%s %s", "Error: could not delete account", err.Error()), http.StatusBadRequest
 	}
+	return nil, nil, http.StatusOK
 }
 
-func VerifyBankAccount(w http.ResponseWriter, req *http.Request) {
-
-	vars := mux.Vars(req)
-	id := vars["id"]
-	accountID := vars["accountID"]
+func VerifyBankAccount(params map[string]interface{}, body []byte) ([]byte, error, int) {
+	id := params["id"].(string)
+	accountID := params["accountID"].(string)
 
 	var amounts struct {
 		Amount1 float64 `json:"amount_1"`
 		Amount2 float64 `json:"amount_2"`
 	}
 
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(req.Body)
-	json.Unmarshal(buf.Bytes(), &amounts)
+	json.Unmarshal(body, &amounts)
 
 	user, err := models.FindUserByID(id)
 	if err != nil {
-		http.Error(w, "Error: couldn't find user", http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%s %s", "Error: could not find user", err.Error()), http.StatusBadRequest
 	}
 
 	bankAccount := user.GetBankAccount(accountID)
 	err = bankAccount.ConfirmVerification(amounts.Amount1, amounts.Amount2)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%s %s", "Error: could not confirm verification", err.Error()), http.StatusBadRequest
 	}
 
 	err = user.Save()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%s %s", "Error: could not save user", err.Error()), http.StatusBadRequest
 	}
+	return nil, nil, http.StatusOK
 }

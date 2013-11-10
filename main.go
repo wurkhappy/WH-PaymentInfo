@@ -1,31 +1,47 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
+	"bytes"
+	"github.com/wurkhappy/WH-Config"
 	"github.com/wurkhappy/Balanced-go"
-	"github.com/wurkhappy/WH-PaymentInfo/handlers"
 	"net/http"
+	"strconv"
 )
 
 func main() {
-	balanced.Username = "ak-test-x9PqPQUtpvUtnXsZqBL4rXGAE8WvvqoJ"
-	r := mux.NewRouter()
-	r.Handle("/user/{id}", dbContextMixIn(handlers.GetUser)).Methods("GET")
-	r.Handle("/user/{id}", dbContextMixIn(handlers.CreateUser)).Methods("POST")
-	r.Handle("/user/{id}/cards", dbContextMixIn(handlers.SaveCard)).Methods("POST")
-	r.Handle("/user/{id}/cards", dbContextMixIn(handlers.GetCards)).Methods("GET")
-	r.Handle("/user/{id}/cards/{cardID}", dbContextMixIn(handlers.DeleteCard)).Methods("DELETE")
-	r.Handle("/user/{id}/bank_account", dbContextMixIn(handlers.SaveBankAccount)).Methods("POST")
-	r.Handle("/user/{id}/bank_account", dbContextMixIn(handlers.GetBankAccounts)).Methods("GET")
-	r.Handle("/user/{id}/bank_account/{accountID}", dbContextMixIn(handlers.DeleteBankAccount)).Methods("DELETE")
-	r.Handle("/user/{id}/bank_account/{accountID}/verify", dbContextMixIn(handlers.VerifyBankAccount)).Methods("POST")
-	http.Handle("/", r)
+	balanced.Username = config.BalancedUsername
+	config.Prod()
+	router.Start()
 
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		//route to function based on the path and method
+		route, pathParams, _ := router.FindRoute(r.URL.String())
+		routeMap := route.Dest.(map[string]interface{})
+		handler := routeMap[r.Method].(func(map[string]interface{}, []byte) ([]byte, error, int))
+
+		//parse the request
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(r.Body)
+
+		//add url params to params var
+		params := make(map[string]interface{})
+		for key, value := range pathParams {
+			params[key] = value
+		}
+		//add url query params
+		values := r.URL.Query()
+		for key, value := range values {
+			params[key] = value
+		}
+
+		//run handler and do standard http stuff(write JSON, return err, set status code)
+		jsonData, err, statusCode := handler(params, buf.Bytes())
+		if err != nil {
+			http.Error(w, `{"status_code":`+strconv.Itoa(statusCode)+`, "description":"`+err.Error()+`"}`, statusCode)
+			return
+		}
+		w.WriteHeader(statusCode)
+		w.Write(jsonData)
+	})
 	http.ListenAndServe(":3120", nil)
-}
-
-type dbContextMixIn func(http.ResponseWriter, *http.Request)
-
-func (h dbContextMixIn) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	h(w, req)
 }

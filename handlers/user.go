@@ -2,37 +2,31 @@ package handlers
 
 import (
 	"encoding/json"
-	"github.com/gorilla/mux"
+	"fmt"
 	"github.com/wurkhappy/WH-PaymentInfo/models"
 	"net/http"
-	// "bytes"
 )
 
-func GetUser(w http.ResponseWriter, req *http.Request) {
-
-	vars := mux.Vars(req)
-	id := vars["id"]
+func GetUser(params map[string]interface{}, body []byte) ([]byte, error, int) {
+	id := params["id"].(string)
 	user, _ := models.FindUserByID(id)
 
 	u, _ := json.Marshal(user)
-	w.Write(u)
+	return u, nil, http.StatusOK
 }
 
-func CreateUser(w http.ResponseWriter, req *http.Request) {
-	vars := mux.Vars(req)
-	id := vars["id"]
+func CreateUser(params map[string]interface{}, body []byte) ([]byte, error, int) {
+	id := params["id"].(string)
 
 	user, err := models.CreateUserWithID(id)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%s %s", "Error: could not create user", err.Error()), http.StatusBadRequest
 	}
 
 	err = user.Save()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("%s %s", "Error: could not save user", err.Error()), http.StatusBadRequest
 	}
 
-	w.Write([]byte(`{}`))
+	return []byte(`{}`), nil, http.StatusOK
 }
