@@ -1,21 +1,29 @@
 package main
 
 import (
+	"encoding/json"
+	"flag"
 	"github.com/wurkhappy/Balanced-go"
 	"github.com/wurkhappy/WH-Config"
 	"github.com/wurkhappy/mdp"
 	"net/url"
-	"encoding/json"
 )
 
+var production = flag.Bool("production", false, "Production settings")
+
 func main() {
+	flag.Parse()
+	if *production {
+		config.Prod()
+	} else {
+		config.Test()
+	}
 	balanced.Username = config.BalancedUsername
-	config.Prod()
 	router.Start()
 	gophers := 10
 
 	for i := 0; i < gophers; i++ {
-		worker := mdp.NewWorker("tcp://localhost:5555", config.UserService, false)
+		worker := mdp.NewWorker(config.MDPBroker, config.UserService, false)
 		defer worker.Close()
 		go route(worker)
 	}
@@ -44,7 +52,10 @@ func route(worker mdp.Worker) {
 		json.Unmarshal(request[0], &req)
 
 		//route to function based on the path and method
-		route, pathParams, _ := router.FindRoute(req.Path)
+		route, pathParams, err := router.FindRoute(req.Path)
+		if err != nil {
+			return
+		}
 		routeMap := route.Dest.(map[string]interface{})
 		handler := routeMap[req.Method].(func(map[string]interface{}, []byte) ([]byte, error, int))
 
