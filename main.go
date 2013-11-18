@@ -23,7 +23,7 @@ func main() {
 	gophers := 10
 
 	for i := 0; i < gophers; i++ {
-		worker := mdp.NewWorker(config.MDPBroker, config.UserService, false)
+		worker := mdp.NewWorker(config.MDPBroker, config.PaymentInfoService, false)
 		defer worker.Close()
 		go route(worker)
 	}
