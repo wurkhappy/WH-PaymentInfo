@@ -5,6 +5,7 @@ import (
 	"flag"
 	"github.com/wurkhappy/Balanced-go"
 	"github.com/wurkhappy/WH-Config"
+	"github.com/wurkhappy/WH-PaymentInfo/DB"
 	"github.com/wurkhappy/mdp"
 	"net/url"
 )
@@ -18,6 +19,7 @@ func main() {
 	} else {
 		config.Test()
 	}
+	DB.Setup(*production)
 	balanced.Username = config.BalancedUsername
 	router.Start()
 	gophers := 10
