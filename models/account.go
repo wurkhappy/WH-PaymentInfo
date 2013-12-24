@@ -1,9 +1,9 @@
 package models
 
 import (
+	"fmt"
 	"github.com/nu7hatch/gouuid"
 	"github.com/wurkhappy/Balanced-go"
-	"fmt"
 	// "log"
 )
 
@@ -28,7 +28,7 @@ func NewBankAccount() *BankAccount {
 func (b *BankAccount) ConfirmVerification(amount1 float64, amount2 float64) error {
 	balAccount := new(balanced.BankAccount)
 	balAccount.VerificationURI = b.VerificationURI
-	verification, bError := balAccount.ConfirmVerification(amount1, amount2)
+	verification, bError := balAccount.ConfirmVerification(amount1*100, amount2*100)
 	if bError != nil {
 		return fmt.Errorf("%s", bError.Description)
 	}
