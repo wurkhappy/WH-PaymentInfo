@@ -18,6 +18,11 @@ func GetUser(params map[string]interface{}, body []byte) ([]byte, error, int) {
 func CreateUser(params map[string]interface{}, body []byte) ([]byte, error, int) {
 	id := params["id"].(string)
 
+	user, _ := models.FindUserByID(id)
+	if user != nil {
+		return []byte(`{}`), nil, http.StatusOK
+	}
+
 	user, err := models.CreateUserWithID(id)
 	if err != nil {
 		return nil, fmt.Errorf("%s %s", "Error: could not create user", err.Error()), http.StatusBadRequest
