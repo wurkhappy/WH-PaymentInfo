@@ -30,9 +30,21 @@ var router urlrouter.Router = urlrouter.Router{
 			},
 		},
 		urlrouter.Route{
+			PathExp: "/user/:id/cards/:cardID/uri",
+			Dest: map[string]interface{}{
+				"GET": handlers.GetCardURI,
+			},
+		},
+		urlrouter.Route{
 			PathExp: "/user/:id/cards/:cardID",
 			Dest: map[string]interface{}{
 				"DELETE": handlers.DeleteCard,
+			},
+		},
+		urlrouter.Route{
+			PathExp: "/user/:id/bank_account/:accountID/uri",
+			Dest: map[string]interface{}{
+				"GET": handlers.GetBankAccountURI,
 			},
 		},
 		urlrouter.Route{

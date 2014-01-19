@@ -9,11 +9,11 @@ import (
 )
 
 type User struct {
-	ID        string         `json:"id" bson:"_id"`
-	URI       string         `json:"uri"`
-	DebitsURI string         `json:"debitsURI"`
-	Cards     []*Card        `json:"cards"`
-	Accounts  []*BankAccount `json:"accounts"`
+	ID        string       `json:"id" bson:"_id"`
+	URI       string       `json:"uri"`
+	DebitsURI string       `json:"debitsURI"`
+	Cards     Cards        `json:"cards"`
+	Accounts  BankAccounts `json:"accounts"`
 }
 
 func (u *User) GetBankAccount(accountID string) *BankAccount {
@@ -24,6 +24,16 @@ func (u *User) GetBankAccount(accountID string) *BankAccount {
 		}
 	}
 	return bankAccount
+}
+
+func (u *User) GetCard(cardID string) *Card {
+	var card *Card
+	for _, c := range u.Cards {
+		if c.ID == cardID {
+			card = c
+		}
+	}
+	return card
 }
 
 func CreateUserWithID(id string) (u *User, err error) {

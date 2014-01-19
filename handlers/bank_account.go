@@ -45,7 +45,7 @@ func GetBankAccounts(params map[string]interface{}, body []byte) ([]byte, error,
 		return nil, fmt.Errorf("%s", "Error: could not find user"), http.StatusBadRequest
 	}
 
-	jsonBytes, _ := json.Marshal(user.Accounts)
+	jsonBytes := user.Accounts.ToJSON()
 	return jsonBytes, nil, http.StatusOK
 }
 
@@ -92,4 +92,21 @@ func VerifyBankAccount(params map[string]interface{}, body []byte) ([]byte, erro
 		return nil, fmt.Errorf("%s %s", "Error: could not save user", err.Error()), http.StatusBadRequest
 	}
 	return nil, nil, http.StatusOK
+}
+
+func GetBankAccountURI(params map[string]interface{}, body []byte) ([]byte, error, int) {
+	id := params["id"].(string)
+	accountID := params["accountID"].(string)
+
+	user, err := models.FindUserByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("%s %s", "Error: could not find user", err.Error()), http.StatusBadRequest
+	}
+
+	bankAccount := user.GetBankAccount(accountID)
+	if bankAccount == nil {
+		return nil, fmt.Errorf("Error: could not find bank account"), http.StatusBadRequest
+	}
+	jsonBytes, _ := json.Marshal(bankAccount)
+	return jsonBytes, nil, http.StatusOK
 }
