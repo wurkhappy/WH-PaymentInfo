@@ -75,14 +75,15 @@ func FindUserByID(id string) (u *User, err error) {
 }
 
 func (u *User) AddCreditCard(card *Card) error {
-	userBal := new(balanced.Customer)
-	userBal.URI = u.URI
-	balCard := card.ConvertToBalancedCard()
-	bError := userBal.AddCreditCard(balCard)
-	if bError != nil {
-		log.Printf("add cc err %s", bError)
-		return fmt.Errorf("%s", bError.Description)
-	}
+	go func(user *User, c *Card) {
+		userBal := new(balanced.Customer)
+		userBal.URI = user.URI
+		balCard := c.ConvertToBalancedCard()
+		bError := userBal.AddCreditCard(balCard)
+		if bError != nil {
+			fmt.Printf("add cc err %s user id: %s", bError, user.ID)
+		}
+	}(u, card)
 	u.Cards = append(u.Cards, card)
 	return nil
 }
