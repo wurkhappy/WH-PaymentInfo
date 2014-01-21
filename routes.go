@@ -12,6 +12,7 @@ var router urlrouter.Router = urlrouter.Router{
 			PathExp: "/user/:id",
 			Dest: map[string]interface{}{
 				"POST": handlers.CreateUser,
+				"PUT":  handlers.UpdateUser,
 				"GET":  handlers.GetUser,
 			},
 		},

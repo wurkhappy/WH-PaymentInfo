@@ -9,11 +9,12 @@ import (
 )
 
 type User struct {
-	ID        string       `json:"id" bson:"_id"`
-	URI       string       `json:"uri"`
-	DebitsURI string       `json:"debitsURI"`
-	Cards     Cards        `json:"cards"`
-	Accounts  BankAccounts `json:"accounts"`
+	ID         string       `json:"id" bson:"_id"`
+	URI        string       `json:"uri"`
+	DebitsURI  string       `json:"debitsURI"`
+	IsVerified bool         `json:"isVerified"`
+	Cards      Cards        `json:"cards"`
+	Accounts   BankAccounts `json:"accounts"`
 }
 
 func (u *User) GetBankAccount(accountID string) *BankAccount {
@@ -49,6 +50,16 @@ func CreateUserWithID(id string) (u *User, err error) {
 	return u, nil
 }
 
+func (u *User) UpdateWithMap(m map[string]interface{}) error {
+	bUser := u.ConvertToBalanced(m)
+	bError := bUser.Update()
+	if bError != nil {
+		return fmt.Errorf("%s", bError.Description)
+	}
+	u.ConvertFromBalanced(bUser)
+	return nil
+}
+
 func (u *User) Save() (err error) {
 	jsonByte, _ := json.Marshal(u)
 	_, err = DB.UpsertUser.Query(u.ID, string(jsonByte))
@@ -62,6 +73,29 @@ func (u *User) Save() (err error) {
 func (u *User) ConvertFromBalanced(bal *balanced.Customer) {
 	u.URI = bal.URI
 	u.DebitsURI = bal.DebitsURI
+	u.IsVerified = bal.IdentityVerified
+}
+
+func (u *User) ConvertToBalanced(data map[string]interface{}) *balanced.Customer {
+	bUser := new(balanced.Customer)
+	bUser.URI = u.URI
+	bUser.Name = data["fullFirstName"].(string) + " " + data["lastName"].(string)
+	bUser.Phone = data["phoneNumber"].(string)
+	bUser.Email = data["email"].(string)
+	year := data["dobYear"].(string)
+	month := data["dobMonth"].(string)
+	var monthString string
+	if len(month) == 1 {
+		monthString = "0"
+	}
+	monthString += month
+	bUser.Dob = year + "-" + monthString
+	bUser.Address = new(balanced.Address)
+	bUser.Address.Line1 = data["streetAddress"].(string)
+	bUser.Address.PostalCode = data["postalCode"].(string)
+	bUser.Address.CountryCode = "US"
+	bUser.SSNLast4 = data["ssnLastFour"].(string)
+	return bUser
 }
 
 func FindUserByID(id string) (u *User, err error) {
