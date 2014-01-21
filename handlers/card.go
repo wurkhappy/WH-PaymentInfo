@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/nu7hatch/gouuid"
 	"github.com/wurkhappy/WH-PaymentInfo/models"
 	"net/http"
 	"strconv"
-	"fmt"
 )
 
 func SaveCard(params map[string]interface{}, body []byte) ([]byte, error, int) {
@@ -53,7 +53,7 @@ func GetCards(params map[string]interface{}, body []byte) ([]byte, error, int) {
 		return nil, fmt.Errorf("%s %s", "Error: could not find user", err.Error()), http.StatusBadRequest
 	}
 
-	jsonBytes, _ := json.Marshal(user.Cards)
+	jsonBytes := user.Cards.ToJSON()
 	return jsonBytes, nil, http.StatusOK
 }
 
@@ -71,4 +71,21 @@ func DeleteCard(params map[string]interface{}, body []byte) ([]byte, error, int)
 		return nil, fmt.Errorf("%s %s", "Error: could not delete card", err.Error()), http.StatusBadRequest
 	}
 	return nil, nil, http.StatusOK
+}
+
+func GetCardURI(params map[string]interface{}, body []byte) ([]byte, error, int) {
+	id := params["id"].(string)
+	cardID := params["cardID"].(string)
+
+	user, err := models.FindUserByID(id)
+	if err != nil {
+		return nil, fmt.Errorf("%s %s", "Error: could not find user", err.Error()), http.StatusBadRequest
+	}
+
+	card := user.GetCard(cardID)
+	if card == nil {
+		return nil, fmt.Errorf("Error: could not find card"), http.StatusBadRequest
+	}
+	jsonBytes, _ := json.Marshal(card)
+	return jsonBytes, nil, http.StatusOK
 }

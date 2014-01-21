@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/nu7hatch/gouuid"
 	"github.com/wurkhappy/Balanced-go"
+	"strconv"
 	// "log"
 )
 
@@ -16,6 +17,26 @@ type BankAccount struct {
 	VerificationsURI string `json:"verifications_uri,omitempty"`
 	VerificationURI  string `json:"verification_uri,omitempty"`
 	CreditsURI       string `json:"credits_uri,omitempty"`
+}
+
+type BankAccounts []*BankAccount
+
+func (b BankAccounts) ToJSON() []byte {
+	jsonString := `[`
+	for i, account := range b {
+		var prefix string
+		if i > 0 {
+			prefix = `, `
+		}
+		accountJSON := prefix + `{` +
+			`"id":"` + account.ID + `",` +
+			`"can_debit":"` + strconv.FormatBool(account.CanDebit) + `",` +
+			`"account_number":"` + account.AccountNumber + `",` +
+			`"routing_number":"` + account.RoutingNumber + `"}`
+		jsonString += accountJSON
+	}
+	jsonString += `]`
+	return []byte(jsonString)
 }
 
 func NewBankAccount() *BankAccount {
