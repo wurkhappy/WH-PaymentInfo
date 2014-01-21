@@ -25,3 +25,10 @@ func Connect(production bool) {
 		panic(err)
 	}
 }
+
+func Close() {
+	UpsertUser.Close()
+	FindUserByID.Close()
+
+	DB.Close()
+}
