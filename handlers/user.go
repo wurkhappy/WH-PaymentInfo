@@ -38,7 +38,6 @@ func CreateUser(params map[string]interface{}, body []byte) ([]byte, error, int)
 
 func UpdateUser(params map[string]interface{}, body []byte) ([]byte, error, int) {
 	id := params["id"].(string)
-	fmt.Println("called update")
 
 	user, _ := models.FindUserByID(id)
 	if user == nil {
