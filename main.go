@@ -3,9 +3,9 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"github.com/wurkhappy/Balanced-go"
 	"github.com/wurkhappy/WH-Config"
 	"github.com/wurkhappy/WH-PaymentInfo/DB"
+	"github.com/wurkhappy/balanced-go"
 	"github.com/wurkhappy/mdp"
 	"log"
 	"net/url"

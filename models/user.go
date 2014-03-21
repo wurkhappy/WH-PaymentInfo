@@ -3,15 +3,14 @@ package models
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/wurkhappy/Balanced-go"
 	"github.com/wurkhappy/WH-PaymentInfo/DB"
+	"github.com/wurkhappy/balanced-go"
 	"log"
 )
 
 type User struct {
 	ID         string       `json:"id" bson:"_id"`
-	URI        string       `json:"uri"`
-	DebitsURI  string       `json:"debitsURI"`
+	BalancedID string       `json:"balanced_id"`
 	IsVerified bool         `json:"isVerified"`
 	Cards      Cards        `json:"cards"`
 	Accounts   BankAccounts `json:"accounts"`
@@ -42,9 +41,9 @@ func CreateUserWithID(id string) (u *User, err error) {
 	u.ID = id
 
 	userBal := new(balanced.Customer)
-	bError := userBal.Create()
-	if bError != nil {
-		return nil, fmt.Errorf("%s", bError.Description)
+	bErrors := balanced.Create(userBal)
+	if len(bErrors) > 0 {
+		return nil, formatBalancedErrors(bErrors)
 	}
 	u.ConvertFromBalanced(userBal)
 	return u, nil
@@ -52,9 +51,9 @@ func CreateUserWithID(id string) (u *User, err error) {
 
 func (u *User) UpdateWithMap(m map[string]interface{}) error {
 	bUser := u.ConvertToBalanced(m)
-	bError := bUser.Update()
-	if bError != nil {
-		return fmt.Errorf("%s", bError.Description)
+	bErrors := balanced.Update(bUser)
+	if len(bErrors) > 0 {
+		return formatBalancedErrors(bErrors)
 	}
 	u.ConvertFromBalanced(bUser)
 	return nil
@@ -72,25 +71,18 @@ func (u *User) Save() (err error) {
 }
 
 func (u *User) ConvertFromBalanced(bal *balanced.Customer) {
-	u.URI = bal.URI
-	u.DebitsURI = bal.DebitsURI
-	u.IsVerified = bal.IdentityVerified
+	u.BalancedID = bal.ID
+	u.IsVerified = bal.IsVerified()
 }
 
 func (u *User) ConvertToBalanced(data map[string]interface{}) *balanced.Customer {
 	bUser := new(balanced.Customer)
-	bUser.URI = u.URI
+	bUser.ID = u.BalancedID
 	bUser.Name = data["fullFirstName"].(string) + " " + data["lastName"].(string)
 	bUser.Phone = data["phoneNumber"].(string)
 	bUser.Email = data["email"].(string)
-	year := data["dobYear"].(string)
-	month := data["dobMonth"].(string)
-	var monthString string
-	if len(month) == 1 {
-		monthString = "0"
-	}
-	monthString += month
-	bUser.Dob = year + "-" + monthString
+	bUser.DobYear = data["dobYear"].(int)
+	bUser.DobMonth = data["dobMonth"].(int)
 	bUser.Address = new(balanced.Address)
 	bUser.Address.Line1 = data["streetAddress"].(string)
 	bUser.Address.PostalCode = data["postalCode"].(string)
@@ -112,12 +104,14 @@ func FindUserByID(id string) (u *User, err error) {
 func (u *User) AddCreditCard(card *Card) error {
 	go func(user *User, c *Card) {
 		userBal := new(balanced.Customer)
-		userBal.URI = user.URI
+		userBal.ID = user.BalancedID
 		balCard := c.ConvertToBalancedCard()
-		bError := userBal.AddCreditCard(balCard)
-		if bError != nil {
-			fmt.Printf("add cc err %s user id: %s", bError, user.ID)
+		bErrors := balCard.AssociateWithCustomer(userBal)
+		if len(bErrors) > 0 {
+			fmt.Println(formatBalancedErrors(bErrors))
 		}
+		c.ConvertFromBalancedCard(balCard)
+		u.Save()
 	}(u, card)
 	u.Cards = append(u.Cards, card)
 	return nil
@@ -127,10 +121,10 @@ func (u *User) DeleteCard(cardID string) error {
 	for i, card := range u.Cards {
 		if card.ID == cardID {
 			balCard := new(balanced.Card)
-			balCard.URI = card.URI
-			bError := balCard.Delete()
-			if bError != nil {
-				return fmt.Errorf("%s", bError.Description)
+			balCard.ID = card.BalancedID
+			bErrors := balanced.Delete(balCard)
+			if len(bErrors) > 0 {
+				return formatBalancedErrors(bErrors)
 			}
 			u.Cards = append(u.Cards[:i], u.Cards[i+1:]...)
 			err := u.Save()
@@ -145,17 +139,19 @@ func (u *User) DeleteCard(cardID string) error {
 
 func (u *User) AddBankAccount(ba *BankAccount) error {
 	userBal := new(balanced.Customer)
-	userBal.URI = u.URI
+	userBal.ID = u.BalancedID
 	balAccount := ba.ConvertToBalancedAccount()
-	bError := userBal.AddBankAccount(balAccount)
-	if bError != nil {
-		return fmt.Errorf("%s", bError.Description)
+	bErrors := balAccount.AssociateWithCustomer(userBal)
+	if len(bErrors) > 0 {
+		return formatBalancedErrors(bErrors)
 	}
-	_, bError = balAccount.Verify()
-	if bError != nil {
-		return fmt.Errorf("%s", bError.Description)
+	verification, bErrors := balAccount.Verify()
+	if len(bErrors) > 0 {
+		return formatBalancedErrors(bErrors)
 	}
-	ba.VerificationURI = balAccount.VerificationURI
+	ba.VerificationID = verification.ID
+	ba.AccountNumber = balAccount.AccountNumber
+	ba.RoutingNumber = balAccount.RoutingNumber
 	u.Accounts = append(u.Accounts, ba)
 	return nil
 }
@@ -164,10 +160,10 @@ func (u *User) DeleteBankAccount(accountID string) error {
 	for i, account := range u.Accounts {
 		if account.ID == accountID {
 			balAccount := new(balanced.BankAccount)
-			balAccount.URI = account.URI
-			bError := balAccount.Delete()
-			if bError != nil {
-				return fmt.Errorf("%s", bError.Description)
+			balAccount.ID = account.BalancedID
+			bErrors := balanced.Delete(balAccount)
+			if len(bErrors) > 0 {
+				return formatBalancedErrors(bErrors)
 			}
 			u.Accounts = append(u.Accounts[:i], u.Accounts[i+1:]...)
 			err := u.Save()

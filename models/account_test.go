@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/nu7hatch/gouuid"
-	// "github.com/wurkhappy/Balanced-go"
 	"github.com/wurkhappy/WH-PaymentInfo/DB"
 	"testing"
 )
@@ -13,7 +12,7 @@ func Test_AccountUnit(t *testing.T) {
 
 func Test_AccountIntegration(t *testing.T) {
 	if !testing.Short() {
-		
+
 		if *useBal {
 			test_ConfirmVerification(t)
 		}

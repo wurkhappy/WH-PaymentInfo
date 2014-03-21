@@ -3,20 +3,18 @@ package models
 import (
 	"fmt"
 	"github.com/nu7hatch/gouuid"
-	"github.com/wurkhappy/Balanced-go"
+	"github.com/wurkhappy/balanced-go"
 	"strconv"
 	// "log"
 )
 
 type BankAccount struct {
-	ID               string `json:"id"`
-	CanDebit         bool   `json:"can_debit"`
-	AccountNumber    string `json:"account_number,omitempty"`
-	URI              string `json:"uri,omitempty"`
-	RoutingNumber    string `json:"routing_number,omitempty"`
-	VerificationsURI string `json:"verifications_uri,omitempty"`
-	VerificationURI  string `json:"verification_uri,omitempty"`
-	CreditsURI       string `json:"credits_uri,omitempty"`
+	ID             string `json:"id"`
+	CanDebit       bool   `json:"can_debit"`
+	AccountNumber  string `json:"account_number,omitempty"`
+	BalancedID     string `json:"balanced_id,omitempty"`
+	RoutingNumber  string `json:"routing_number,omitempty"`
+	VerificationID string `json:"verification_id,omitempty"`
 }
 
 type BankAccounts []*BankAccount
@@ -30,7 +28,7 @@ func (b BankAccounts) ToJSON() []byte {
 		}
 		accountJSON := prefix + `{` +
 			`"id":"` + account.ID + `",` +
-			`"can_debit":"` + strconv.FormatBool(account.CanDebit) + `",` +
+			`"can_debit":` + strconv.FormatBool(account.CanDebit) + `,` +
 			`"account_number":"` + account.AccountNumber + `",` +
 			`"routing_number":"` + account.RoutingNumber + `"}`
 		jsonString += accountJSON
@@ -47,14 +45,14 @@ func NewBankAccount() *BankAccount {
 }
 
 func (b *BankAccount) ConfirmVerification(amount1 float64, amount2 float64) error {
-	balAccount := new(balanced.BankAccount)
-	balAccount.VerificationURI = b.VerificationURI
-	verification, bError := balAccount.ConfirmVerification(amount1*100, amount2*100)
-	if bError != nil {
-		return fmt.Errorf("%s", bError.Description)
+	balVerification := new(balanced.Verification)
+	balVerification.ID = b.VerificationID
+	bErrors := balVerification.Confirm(int(amount1*100), int(amount2*100))
+	if len(bErrors) > 0 {
+		return formatBalancedErrors(bErrors)
 	}
 
-	if verification.State == "verified" {
+	if balVerification.VerificationStatus == "succeeded" {
 		b.CanDebit = true
 	} else {
 		return fmt.Errorf("%s", "Account not verified")
@@ -63,23 +61,15 @@ func (b *BankAccount) ConfirmVerification(amount1 float64, amount2 float64) erro
 }
 
 func (a *BankAccount) ConvertFromBalancedAccount(balAccount *balanced.BankAccount) {
-	a.AccountNumber = balAccount.AccountNumber
-	a.URI = balAccount.URI
+	accountNumberLength := len(balAccount.AccountNumber)
+	a.AccountNumber = balAccount.AccountNumber[accountNumberLength-4 : accountNumberLength]
+	a.BalancedID = balAccount.ID
 	a.RoutingNumber = balAccount.RoutingNumber
-	a.VerificationURI = balAccount.VerificationURI
-	a.VerificationsURI = balAccount.VerificationsURI
-	a.CreditsURI = balAccount.CreditsURI
 	a.CanDebit = balAccount.CanDebit
 }
 
 func (a *BankAccount) ConvertToBalancedAccount() (balAccount *balanced.BankAccount) {
 	balAccount = new(balanced.BankAccount)
-	balAccount.AccountNumber = a.AccountNumber
-	balAccount.URI = a.URI
-	balAccount.RoutingNumber = a.RoutingNumber
-	balAccount.VerificationURI = a.VerificationURI
-	balAccount.VerificationsURI = a.VerificationsURI
-	balAccount.CreditsURI = a.CreditsURI
-	balAccount.CanDebit = a.CanDebit
+	balAccount.ID = a.BalancedID
 	return balAccount
 }

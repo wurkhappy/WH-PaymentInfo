@@ -2,9 +2,9 @@ package models
 
 import (
 	"flag"
-	"github.com/wurkhappy/Balanced-go"
 	"github.com/wurkhappy/WH-Config"
 	"github.com/wurkhappy/WH-PaymentInfo/DB"
+	"github.com/wurkhappy/balanced-go"
 	// "log"
 )
 

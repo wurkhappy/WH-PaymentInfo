@@ -2,8 +2,8 @@ package models
 
 import (
 	"github.com/nu7hatch/gouuid"
-	"github.com/wurkhappy/Balanced-go"
 	"github.com/wurkhappy/WH-PaymentInfo/DB"
+	"github.com/wurkhappy/balanced-go"
 	"log"
 	"testing"
 	"time"

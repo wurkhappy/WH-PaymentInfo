@@ -6,7 +6,6 @@ import (
 	"github.com/nu7hatch/gouuid"
 	"github.com/wurkhappy/WH-PaymentInfo/models"
 	"net/http"
-	"strconv"
 )
 
 func SaveCard(params map[string]interface{}, body []byte) ([]byte, error, int) {
@@ -14,14 +13,6 @@ func SaveCard(params map[string]interface{}, body []byte) ([]byte, error, int) {
 
 	card := new(models.Card)
 	json.Unmarshal(body, &card)
-	if card.ExpirationMonth == 0 {
-		var m map[string]interface{}
-		json.Unmarshal(body, &m)
-		month, _ := strconv.Atoi(m["expiration_month"].(string))
-		year, _ := strconv.Atoi(m["expiration_year"].(string))
-		card.ExpirationMonth = month
-		card.ExpirationYear = year
-	}
 
 	cardID, _ := uuid.NewV4()
 	card.ID = cardID.String()
