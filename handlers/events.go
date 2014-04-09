@@ -42,20 +42,20 @@ func (e *Event) PublishOnChannel(ch *amqp.Channel) {
 	}
 
 	ch.ExchangeDeclare(
-		"logs_topic", // name
-		"topic",      // type
-		true,         // durable
-		false,        // auto-deleted
-		false,        // internal
-		false,        // noWait
-		nil,          // arguments
+		config.MainExchange, // name
+		"topic",             // type
+		true,                // durable
+		false,               // auto-deleted
+		false,               // internal
+		false,               // noWait
+		nil,                 // arguments
 	)
 
 	ch.Publish(
-		"logs_topic", // exchange
-		e.Name,       // routing key
-		false,        // mandatory
-		false,        // immediate
+		config.MainExchange, // name
+		e.Name,              // routing key
+		false,               // mandatory
+		false,               // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        e.Body,
@@ -104,6 +104,46 @@ func UpdatePaymentSubmitted(params map[string]interface{}, body []byte) ([]byte,
 	events := Events{&Event{"paymentinfo.credit", j}}
 	events.Publish()
 	log.Println("update payment submitted", string(j))
+
+	return nil, nil, http.StatusOK
+}
+
+func UpdatePaymentAccepted(params map[string]interface{}, body []byte) ([]byte, error, int) {
+	fmt.Println("payment accepted")
+	var message struct {
+		PaymentID           string  `json:"paymentID"`
+		Amount              float64 `json:"amount"`
+		UserID              string  `json:"userID"`
+		DebitSourceID       string  `json:"debitSourceID,omitempty"`
+		DebitSourceBalanced string  `json:"debitSourceBalanced,omitempty"`
+		PaymentType         string  `json:"paymentType,omitempty"`
+	}
+
+	json.Unmarshal(body, &message)
+
+	user, err := models.FindUserByID(message.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("%s %s", "Error: could not find user", err.Error()), http.StatusBadRequest
+	}
+
+	bankAccount := user.GetBankAccount(message.DebitSourceID)
+	card := user.GetCard(message.DebitSourceID)
+	if bankAccount == nil && card == nil {
+		return nil, fmt.Errorf("Error: could not find bank account or card"), http.StatusBadRequest
+	}
+
+	if bankAccount != nil {
+		message.DebitSourceBalanced = bankAccount.BalancedID
+		message.PaymentType = "BankBalanced"
+	} else if card != nil {
+		message.DebitSourceBalanced = card.BalancedID
+		message.PaymentType = "CardBalanced"
+	}
+
+	j, _ := json.Marshal(message)
+	events := Events{&Event{"paymentinfo.debit", j}}
+	events.Publish()
+	fmt.Println("published")
 
 	return nil, nil, http.StatusOK
 }

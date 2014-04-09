@@ -11,5 +11,9 @@ var router urlrouter.Router = urlrouter.Router{
 			PathExp: "payment.submitted",
 			Dest:    handlers.UpdatePaymentSubmitted,
 		},
+		urlrouter.Route{
+			PathExp: "payment.accepted",
+			Dest:    handlers.UpdatePaymentAccepted,
+		},
 	},
 }
