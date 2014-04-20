@@ -7,6 +7,7 @@ import (
 	"github.com/wurkhappy/WH-Config"
 	"github.com/wurkhappy/WH-PaymentInfo/DB"
 	"github.com/wurkhappy/WH-PaymentInfo/handlers"
+	"github.com/wurkhappy/balanced-go"
 	"log"
 )
 
@@ -33,6 +34,7 @@ func main() {
 		config.Test()
 	}
 	DB.Setup(*production)
+	balanced.Username = config.BalancedUsername
 	defer DB.Close()
 
 	err = router.Start()

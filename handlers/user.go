@@ -16,14 +16,17 @@ func GetUser(params map[string]interface{}, body []byte) ([]byte, error, int) {
 }
 
 func CreateUser(params map[string]interface{}, body []byte) ([]byte, error, int) {
-	id := params["id"].(string)
+	var message struct {
+		ID string `json:"id"`
+	}
+	json.Unmarshal(body, &message)
 
-	user, _ := models.FindUserByID(id)
+	user, _ := models.FindUserByID(message.ID)
 	if user != nil {
 		return []byte(`{}`), nil, http.StatusOK
 	}
 
-	user, err := models.CreateUserWithID(id)
+	user, err := models.CreateUserWithID(message.ID)
 	if err != nil {
 		return nil, fmt.Errorf("%s %s", "Error: could not create user", err.Error()), http.StatusBadRequest
 	}

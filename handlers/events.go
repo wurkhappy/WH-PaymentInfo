@@ -109,7 +109,6 @@ func UpdatePaymentSubmitted(params map[string]interface{}, body []byte) ([]byte,
 }
 
 func UpdatePaymentAccepted(params map[string]interface{}, body []byte) ([]byte, error, int) {
-	fmt.Println("payment accepted")
 	var message struct {
 		PaymentID           string  `json:"paymentID"`
 		Amount              float64 `json:"amount"`
