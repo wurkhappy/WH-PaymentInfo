@@ -19,5 +19,9 @@ var router urlrouter.Router = urlrouter.Router{
 			PathExp: "user.created",
 			Dest:    handlers.CreateUser,
 		},
+		urlrouter.Route{
+			PathExp: "agreement.submitted",
+			Dest:    handlers.AgreementSubmitted,
+		},
 	},
 }

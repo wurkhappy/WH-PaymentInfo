@@ -142,7 +142,24 @@ func UpdatePaymentAccepted(params map[string]interface{}, body []byte) ([]byte, 
 	j, _ := json.Marshal(message)
 	events := Events{&Event{"paymentinfo.debit", j}}
 	events.Publish()
-	fmt.Println("published")
+
+	return nil, nil, http.StatusOK
+}
+
+func AgreementSubmitted(params map[string]interface{}, body []byte) ([]byte, error, int) {
+	var message struct {
+		UserID string `json:"userID"`
+	}
+	json.Unmarshal(body, &message)
+	user, err := models.FindUserByID(message.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("%s %s", "Error: could not find user", err.Error()), http.StatusBadRequest
+	}
+	if len(user.Accounts) == 0 {
+		j, _ := json.Marshal(message)
+		events := Events{&Event{"paymentinfo.missing_bank.new_agreement", j}}
+		events.Publish()
+	}
 
 	return nil, nil, http.StatusOK
 }
