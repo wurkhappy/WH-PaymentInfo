@@ -33,6 +33,9 @@ func SaveBankAccount(params map[string]interface{}, body []byte) ([]byte, error,
 		return nil, fmt.Errorf("%s %s", "Could not save user: ", err.Error()), http.StatusBadRequest
 	}
 
+	events := Events{&Event{"paymentinfo.bank_account.added", []byte(`{"userID":"` + id + `"}`)}}
+	events.Publish()
+
 	ba, _ := json.Marshal(bankAccount)
 	return ba, nil, http.StatusOK
 }
